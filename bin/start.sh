@@ -21,4 +21,6 @@ elif [ "$1" == "prod" ]
         echo "using production configure file..."
         mongod -f ../conf/mongodb.prod.conf
 fi
+
+pm2 start ./www
 exit 0
