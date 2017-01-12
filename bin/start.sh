@@ -11,12 +11,14 @@ if [ ! -d ../data ]
     then
     mkdir -p ../data
 fi
+
 if [ "$1" == "dev" ]
     then
-    echo "using development configure file..."
-    mongod -f ../conf/mongodb.dev.conf
-    else
-    echo "using production configure file..."
-    mongod -f ../conf/mongodb.prod.conf
+        echo "using development configure file..."
+        mongod -f ../conf/mongodb.dev.conf
+elif [ "$1" == "prod" ]
+    then
+        echo "using production configure file..."
+        mongod -f ../conf/mongodb.prod.conf
 fi
 exit 0
