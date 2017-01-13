@@ -4,8 +4,22 @@ const crypto = require('crypto');
 const User = require('../models/user.js');
 const Post = require('../models/post.js');
 
+const log4js = require('log4js');
+const logger = log4js.getLogger('normal');
+
+
 /* GET home page. */
+router.all((req, res, next) => {
+    res.render('index', {
+        title: '主页',
+        user: req.session.user,
+        success: req.flash('success').toString(),
+        error: req.flash('error').toString()
+    });
+});
+
 router.get('/', (req, res) => {
+    logger.warn('warning info 1');
     Post.get(null, function (err, posts) {
         if (err) {
             posts = [];
@@ -20,6 +34,7 @@ router.get('/', (req, res) => {
     });
 });
 router.get('/reg', function (req, res) {
+
     res.render('reg', {
         title: '注册',
         user: req.session.user,
@@ -104,6 +119,19 @@ router.get('/post', function (req, res) {
         success: req.flash('success').toString(),
         error: req.flash('error').toString()
     });
+});
+
+router.get('/post/:name', (req, res) => {
+    let name = req.params.name;
+    console.log(req.params.name);
+    Post.get(name, (err, doc) => {
+        console.log(doc);
+        res.render('post_detail', {
+            doc: doc
+        })
+    })
+
+
 });
 
 router.post('/post', checkLogin);
