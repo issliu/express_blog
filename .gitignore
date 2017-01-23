@@ -2,3 +2,6 @@
 .idea
 /data
 /logs
+.DS_Store
+bower_components/
+

@@ -59,7 +59,9 @@ app.use(session({
     })
 }));
 
+app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, 'public')));
+
 app.use(compression());
 app.use('/', index);
 app.use('/users', users);
