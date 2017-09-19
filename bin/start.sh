@@ -20,6 +20,10 @@ elif [ "$1" == "prod" ]
     then
         echo "using production configure file..."
         mongod -f ../conf/mongodb.prod.conf
+elif [ "$1" == "win" ]
+    then
+        echo "using production configure file for windows..."
+        mongod -f ../conf/mongodb.dev.windows.conf
 fi
 
 pm2 start ./www
