@@ -9,17 +9,22 @@ header, footer {
     background-color: #0f0f0f;
 }
 
-header .menu a{
-    color: #fff;
+a {
     text-decoration: none;
+}
+
+header .menu {
     float: right;
     margin: 0 10px;
 }
-
 
 footer {
     text-align: center;
     position: fixed;
     bottom: 0;
-    width:100%;
+    width: 100%;
+}
+
+footer span{
+    color: #fff;
 }

@@ -1,0 +1,232 @@
+(function(){
+	var instant = {
+		_url: "http://news.163.com/special/0001220O/news_json.js",
+		_now: new Date(),
+		init: function(){
+			NTES.ui.Template.load();
+
+			var t = this,
+			cookie = NTES.cookie.get("instantNews").split("_"),
+			ids = ["instantHolder", "instantPanel", "instantInterval", "instantSize", "remain", "manual", "setYear", "setMonth", "prevMonth", "nextMonth", "getCalendar", "calendarBox", "calendarList", "loading"],
+			i = ids.length;
+
+			while(--i >= 0){
+				t["$" + ids[i]] = $("#" + ids[i]);
+			}
+
+			t.all = cookie[0] ? false : true;
+			t.active = t.all ? [] : cookie[0].split(",");
+			t.size = parseInt(cookie[1]) || 40;
+			t.interval = parseInt(cookie[2]) || 120;
+			t.remain = t.interval;
+
+			var year = t._now.getFullYear(), month = t._now.getMonth() + 1;
+			t.$setYear.attr("innerHTML", year);
+			t.$setMonth.attr("innerHTML", month);
+			t._calendar = new NTES.ui.Calendar(year, month);
+			t.$prevMonth.addEvent("click", function(e){
+				e.preventDefault();
+				t.setMonth(-1);
+			});
+			t.$nextMonth.addEvent("click", function(e){
+				e.preventDefault();
+				t.setMonth(1);
+			});
+
+			new NTES.ui.PopupLayer(t.$getCalendar, t.$calendarBox, "click");
+
+			t.importJs(t._url);
+
+			var sizes = t.$instantSize.$("> li");
+			sizes.each(function(){
+				var $self = $(this), size = parseInt($self.attr("innerHTML"));
+				size == t.size && $self.addCss("active");
+				$self.addEvent("click", function(){
+					sizes.removeCss("active");
+					$self.addCss("active");
+					t.size = size;
+					t.page = 1;
+					t.show();
+					t.setCookie();
+				});
+			});
+			var intervals = t.$instantInterval.$("> li");
+			intervals.each(function(){
+				var $self = $(this), interval = parseInt($self.attr("innerHTML"));
+				interval == t.interval && $self.addCss("active");
+				$self.addEvent("click", function(){
+					intervals.removeCss("active");
+					$self.addCss("active");
+					t.interval = interval;
+					t.remain = 0;
+					t.show();
+					t.setCookie();
+				});
+			});
+			t.$manual.addEvent("click", function(){
+				return t.importJs()
+			});
+			$(t.$remain.parentNode).addEvent("click", function(){
+				if(t.timer !== undefined){
+					clearInterval(t.timer);
+					t.timer = undefined;
+					$(this).removeCss("btn_checked");
+				} else {
+					t.timer = setInterval(t.countDown.bind(t), 1000);
+					$(this).addCss("btn_checked");
+				}
+			});
+			t.timer = setInterval(t.countDown.bind(t), 1000);
+		},
+		build: function(){
+			var t = this, li;
+			t.buildCal();
+			t.page = 1;
+			t.$instantHolder.innerHTML = "<li>全部</li>";
+			for(var i = 0; i < data.category.length; i++){
+				li = document.createElement("li");
+				$(li).attr("innerHTML", data.category[i].n);
+				t.$instantHolder.appendChild(li);
+			}
+			var holders = t.$instantHolder.$("> li");
+			if(t.all){
+				holders.$(0).addCss("active");
+			} else {
+				var i = t.active.length;
+				while(--i >= 0){
+					holders.$(parseInt(t.active[i]) + 1).addCss("active");
+				}
+			}
+			t.show();
+			holders.each(function(i){
+				if(i == 0){
+					$(this).addEvent("click", function(){
+						if(t.all){
+							return;
+						}
+						t.all = true;
+						holders.$(0).addCss("active");
+						var i = t.active.length;
+						while(--i >= 0){
+							holders.$(parseInt(t.active.pop()) + 1).removeCss("active");
+						}
+						t.show();
+						t.setCookie();
+					});
+				} else {
+					$(this).addEvent("click", function(){
+						var c = (i - 1).toString(), index = t.active.indexOf(c);
+						if(index < 0){
+							if(t.active.length == 0){
+								t.all = false;
+								holders.$(0).removeCss("active");
+							}
+							t.active.push(c);
+							holders.$(i).addCss("active");
+						} else {
+							t.active.remove(index);
+							holders.$(i).removeCss("active");
+							if(t.active.length == 0){
+								t.all = true;
+								holders.$(0).addCss("active");
+							}
+						}
+						t.show();
+						t.setCookie();
+					}, i);
+				}
+			});
+		},
+		show: function(){
+			var t = this;
+			t.list = t.getList();
+			t.total = Math.ceil(t.list.length / t.size);
+			t.showList();
+			t.$loading.addCss("hidden");
+		},
+		showList: function(){
+			var t =this, start = (t.page - 1) * t.size;
+			t.$instantPanel.innerHTML = NTES.ui.Template.parse("panel", { category: data.category, list: t.list.slice(start, start + t.size), page: t.page, total: t.total });
+			t.$instantPanel.$("> div.bar_pages > a").addEvent("click", function(event){
+				event.preventDefault();
+				t.page = t.getPage(this.href);
+				t.showList();
+			});
+		},
+		getList: function(){
+			var t = this, arr = [], i;
+			if(t.all){
+				i = data.category.length;
+				while(--i >= 0){
+					NTES.util.merge(arr, data.news[i]);
+				}
+			} else {
+				i = t.active.length;
+				while(--i >= 0){
+					NTES.util.merge(arr, data.news[t.active[i]]);
+				}
+			}
+			arr.sort(t.compareDates);
+			return arr;
+		},
+		getPage: function(url){
+			var matchs = url.match(/#([^&]*&)*page=([^&]+)/i),
+				page = matchs ? parseInt(matchs[2]) : NaN;
+			return page;
+		},
+		compareDates: function(a, b){
+			var dateA = new Date(a.p.replace(/-/g, "/")),
+				dateB = new Date(b.p.replace(/-/g, "/"));
+			return dateB - dateA;
+		},
+		importJs: function(url){
+			var t = this, f;
+			t.$loading.removeCss("hidden");
+			if(url === undefined){
+				f = t.show.bind(t)
+			} else {
+				t._url = url
+				f = t.build.bind(t)
+			}
+			NTES.ajax.importJs(t._url + "?" + Math.random(), f);
+		},
+		countDown: function(){
+			var t = this;
+			if(!t.remain){
+				t.remain = t.interval;
+				t.importJs();
+			}
+			t.remain = t.remain - 1;
+			t.$remain.attr("innerHTML", ("0" + t.remain).slice(-3));
+		},
+		setCookie: function(){
+			var t = this;
+			NTES.cookie.set("instantNews", String.format("%1_%2_%3", t.active.join(), t.size, t.interval), "1y");
+		},
+		setMonth: function(relative) {
+			var t = this, year = t._now.getFullYear(), month = t._now.getMonth() + 1 + relative;
+			if (month > 12) {
+				year++;
+				month = month - 12;
+			} else if (month <= 0) {
+				year--;
+				month = month + 12;
+			}
+			t._now.setFullYear(year, month - 1);
+			t.$setYear.attr("innerHTML", year);
+			t.$setMonth.attr("innerHTML", month);
+			t._calendar.setDate(year, month);
+			t.buildCal();
+
+		},
+		buildCal: function(){
+			var t = this;
+			t.$calendarList.innerHTML = NTES.ui.Template.parse("calendar", { calendar: t._calendar.build(), curUrl: t._url });
+			t.$calendarList.$("a").addEvent("click", function(event){
+				event.preventDefault();
+				instant.importJs(this.href);
+			});
+		}
+	};
+	instant.init();
+})();

@@ -60,11 +60,24 @@ app.use(session({
 }));
 
 app.use(express.static(__dirname));
-app.use(express.static(path.join(__dirname, 'public')));
+
+// 关闭模板引擎功能
+app.use('*', express.static(path.join(__dirname, 'public')));
 
 app.use(compression());
-app.use('/', index);
-app.use('/users', users);
+
+
+
+app.get('/api/news', (req, res)=> {
+    logger.info(req.headers);
+    let data = {
+        name: 'liushun'
+    };
+    logger.info(data);
+    res.json(data);
+});
+// app.use('/', index);
+// app.use('/users', users);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

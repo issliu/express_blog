@@ -33,6 +33,8 @@ router.get('/', (req, res) => {
         });
     });
 });
+
+
 router.get('/reg', function (req, res) {
 
     res.render('reg', {
@@ -120,6 +122,16 @@ router.get('/post', function (req, res) {
         error: req.flash('error').toString()
     });
 });
+
+router.get('news', (req, res) => {
+    let request = require('request');
+    request('http://digi.163.com/special/index_datalist/?callback=data_callback', (err, req, body)=> {
+        if(!err) {
+            var logger = log4js.getLogger('normal');
+            logger.info(body);
+        }
+    })
+})
 
 router.get('/post/:name', (req, res) => {
     let name = req.params.name;
