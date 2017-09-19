@@ -1,0 +1,25 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+header, footer {
+    height: 50px;
+    line-height: 50px;
+    background-color: #0f0f0f;
+}
+
+header .menu a{
+    color: #fff;
+    text-decoration: none;
+    float: right;
+    margin: 0 10px;
+}
+
+
+footer {
+    text-align: center;
+    position: fixed;
+    bottom: 0;
+    width:100%;
+}
