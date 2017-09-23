@@ -16,15 +16,17 @@ if [ "$1" == "dev" ]
     then
         echo "using development configure file..."
         mongod -f ../conf/mongodb.dev.conf
+        supervisor ./www
 elif [ "$1" == "prod" ]
     then
         echo "using production configure file..."
         mongod -f ../conf/mongodb.prod.conf
+        pm2 start ./www
 elif [ "$1" == "win" ]
     then
         echo "using production configure file for windows..."
         mongod -f ../conf/mongodb.dev.windows.conf
+        supervisor ./www
 fi
 
-pm2 start ./www
 exit 0
